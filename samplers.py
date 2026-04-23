@@ -35,6 +35,7 @@ from comfy.ldm.hunyuan_video.model import HunyuanVideo
 from comfy.ldm.hidream.model import HiDreamImageTransformer2DModel
 from comfy.ldm.lumina.model import NextDiT
 from comfy.ldm.flux.model import Flux
+from comfy.ldm.anima.model import Anima
 
 from .flux.model import NAGFluxSwitch
 from .chroma.model import NAGChromaSwitch
@@ -45,6 +46,7 @@ from .hunyuan_video.model import NAGHunyuanVideoSwitch
 from .hidream.model import NAGHiDreamImageTransformer2DModelSwitch
 from .lumina2.model import NAGNextDiTSwitch
 from .klein.model import NAGKleinSwitch
+from .anima.model import NAGAnimaSwitch 
 
 def sample_with_nag(
         model,
@@ -201,6 +203,8 @@ class NAGCFGGuider(CFGGuider):
                 switcher_cls = NAGNextDiTSwitch
             elif model_type == HiDreamImageTransformer2DModel:
                 switcher_cls = NAGHiDreamImageTransformer2DModelSwitch
+            elif model_type == Anima:
+                switcher_cls = NAGAnimaSwitch
             else:
                 raise ValueError(
                     f"Model type {model_type} is not support for NAGCFGGuider"
