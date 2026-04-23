@@ -11,9 +11,9 @@ Navigate to the **ComfyUI/custom_nodes** folder, [open cmd](https://www.youtube.
 ```bash
 git clone https://github.com/BigStationW/ComfyUI-NAG-Extended
 ```
+Restart ComfyUI after installation.
 
 ## Intro
-Restart ComfyUI after installation.
 
 Implementation of [Normalized Attention Guidance: Universal Negative Guidance for Diffusion Models](https://chendaryen.github.io/NAG.github.io/) for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
@@ -31,31 +31,10 @@ Flux-Dev Demo: https://huggingface.co/spaces/ChenDY/NAG_FLUX.1-dev
 
 ![comfyui-nag](workflow.png?cache=20250628)
 
-## News
-
-2025-07-06: Add three new nodes:
-- `KSamplerWithNAG (Advanced)` as a drop-in replacement for `KSampler (Advanced)`.
-- `SamplerCustomWithNAG` for `SamplerCustom`.
-- `NAGGuider` for `BasicGuider`.
-
-2025-07-02: `HiDream` is now supported!
-
-2025-07-02: Add support for `TeaCache` and `WaveSpeed` to accelerate NAG sampling!
-
-2025-06-30: Fix a major bug affecting `Flux`, `Flux Kontext` and `Chroma`, resulting in degraded guidance. Please update your NAG node!
-
-2025-06-29: Add compile model support. You can now use compile model nodes like `TorchCompileModel` to speed up NAG sampling!
-
-2025-06-28: `Flux Kontext` is now supported. Check out the [workflow](https://github.com/ChenDarYen/ComfyUI-NAG/blob/main/workflows/NAG-Flux-Kontext-Dev-ComfyUI-Workflow.json)!
-
-2025-06-26: `Hunyuan video` is now supported!
-
-2025-06-25: `Wan` video generation is now supported (GGUF compatible)! Try it out with the new [workflow](https://github.com/ChenDarYen/ComfyUI-NAG/blob/main/workflows/NAG-Wan-Fast-ComfyUI-Workflow.json)!
-
 ## Nodes
 
 - `KSamplerWithNAG`, `KSamplerWithNAG (Advanced)`, `SamplerCustomWithNAG`
-- `BasicGuider`, `NAGCFGGuider`
+- `BasicGuider`, `NAGCFGGuider`, `NAGCFGGuiderAdvanced`
 
 ## Usage
 
