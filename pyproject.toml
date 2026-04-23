@@ -1,0 +1,16 @@
+[project]
+name = "comfyui-nag-extended"
+description = "Extended model list for NAG integration in ComfyUI"
+version = "1.0.0"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/BigStationW/ComfyUI-NAG-Extended"
+Documentation = "https://github.com/BigStationW/ComfyUI-NAG-Extended"
+"Bug Tracker" = "https://github.com/BigStationW/ComfyUI-NAG-Extended/issues"
+
+[tool.comfy]
+PublisherId = "bigstationw"
+DisplayName = "ComfyUI NAG Extended"
+Icon = ""
+includes = []
