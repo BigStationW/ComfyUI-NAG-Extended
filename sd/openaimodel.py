@@ -21,11 +21,12 @@ class NAGUNetModel(UNetModel):
             transformer_options={},
 
             nag_negative_context=None,
+            nag_sigma_start=14.7,
             nag_sigma_end=0.,
 
             **kwargs,
     ):
-        apply_nag = check_nag_activation(transformer_options, nag_sigma_end)
+        apply_nag = check_nag_activation(transformer_options, nag_sigma_start, nag_sigma_end)
         if apply_nag:
             context = cat_context(context, nag_negative_context)
             cross_attns_forward = list()
@@ -54,6 +55,7 @@ class NAGUNetModelSwitch(NAGSwitch):
             partial(
                 NAGUNetModel.forward,
                 nag_negative_context=self.nag_negative_cond[0][0],
+                nag_sigma_start=self.nag_sigma_start,
                 nag_sigma_end=self.nag_sigma_end,
             ),
             self.model
