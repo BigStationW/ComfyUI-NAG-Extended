@@ -30,6 +30,34 @@ class NAGNextDiT(NextDiT):
         original_batch_size = x.shape[0]
 
         if apply_nag:
+            pos_bsz = original_batch_size
+            nag_bsz = nag_negative_context.shape[0]
+
+            def expand_tensors_in_dict(d, is_root=False):
+                if not isinstance(d, dict): return d
+                new_d = {}
+                for k, v in d.items():
+                    if is_root and k in ["nag_negative_context", "nag_sigma_start", "nag_sigma_end"]:
+                        new_d[k] = v
+                        continue
+                    if isinstance(v, torch.Tensor) and v.ndim > 0 and v.shape[0] == pos_bsz:
+                        if nag_bsz > pos_bsz:
+                            repeat_times = (nag_bsz + pos_bsz - 1) // pos_bsz
+                            v_neg = v.repeat(repeat_times, *[1]*(v.ndim-1))[:nag_bsz]
+                        else:
+                            v_neg = v[:nag_bsz]
+                        new_d[k] = torch.cat([v, v_neg], dim=0)
+                    elif isinstance(v, dict):
+                        new_d[k] = expand_tensors_in_dict(v, is_root=False)
+                    elif k == "cond_or_uncond" and isinstance(v, list) and len(v) == pos_bsz:
+                        new_d[k] = v + [v[-1]] * nag_bsz
+                    else:
+                        new_d[k] = v
+                return new_d
+
+            kwargs = expand_tensors_in_dict(kwargs, is_root=True)
+            transformer_options = kwargs.get("transformer_options", {})
+            
             # 1. Calculate Image Token Count for the Attention layer to use
             _, _, h, w = x.shape
             p = self.patch_size

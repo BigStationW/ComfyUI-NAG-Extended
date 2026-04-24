@@ -290,6 +290,34 @@ class NAGKlein(Flux):
         apply_nag = check_nag_activation(transformer_options, nag_sigma_start, nag_sigma_end)
         
         if apply_nag and nag_negative_context is not None:
+            pos_bsz = x.shape[0]
+            nag_bsz = nag_negative_context.shape[0]
+
+            def expand_tensors_in_dict(d, is_root=False):
+                if not isinstance(d, dict): return d
+                new_d = {}
+                for k, v in d.items():
+                    if is_root and k in["nag_negative_context", "nag_negative_y", "nag_sigma_start", "nag_sigma_end", "nag_negative_encoder_hidden_states_llama"]:
+                        new_d[k] = v
+                        continue
+                    if isinstance(v, torch.Tensor) and v.ndim > 0 and v.shape[0] == pos_bsz:
+                        if nag_bsz > pos_bsz:
+                            repeat_times = (nag_bsz + pos_bsz - 1) // pos_bsz
+                            v_neg = v.repeat(repeat_times, *[1]*(v.ndim-1))[:nag_bsz]
+                        else:
+                            v_neg = v[:nag_bsz]
+                        new_d[k] = torch.cat([v, v_neg], dim=0)
+                    elif isinstance(v, dict):
+                        new_d[k] = expand_tensors_in_dict(v, is_root=False)
+                    elif k == "cond_or_uncond" and isinstance(v, list) and len(v) == pos_bsz:
+                        new_d[k] = v + [v[-1]] * nag_bsz
+                    else:
+                        new_d[k] = v
+                return new_d
+
+            transformer_options = expand_tensors_in_dict(transformer_options, is_root=True)
+            kwargs = expand_tensors_in_dict(kwargs, is_root=True)
+            
             origin_context_len = context.shape[1]
             nag_bsz = nag_negative_context.shape[0]
             nag_negative_context_len = nag_negative_context.shape[1]
