@@ -65,7 +65,34 @@ def forward_nag_anima(
         else:
             y_extended = None
 
-        # 4. Patch self_attn blocks temporarily to tell them the batch split
+        # 4. Expand any tensors in kwargs that match the original batch size (e.g. for negpip masks)
+        def expand_tensors_in_dict(d, is_root=False):
+            new_d = {}
+            for k, v in d.items():
+                # Skip expanding our own appended NAG parameters
+                if is_root and k in["nag_negative_context", "nag_negative_y", "nag_sigma_start", "nag_sigma_end"]:
+                    new_d[k] = v
+                    continue
+                
+                # If we spot a batched tensor, duplicate the last part of it for the NAG batch
+                if isinstance(v, torch.Tensor) and v.ndim > 0 and v.shape[0] == pos_bsz:
+                    if nag_bsz > pos_bsz:
+                        repeat_times = (nag_bsz + pos_bsz - 1) // pos_bsz
+                        v_neg = v.repeat(repeat_times, *[1]*(v.ndim-1))[:nag_bsz]
+                    else:
+                        v_neg = v[:nag_bsz]
+                    new_d[k] = torch.cat([v, v_neg], dim=0)
+                elif isinstance(v, dict):
+                    new_d[k] = expand_tensors_in_dict(v, is_root=False)
+                elif k == "cond_or_uncond" and isinstance(v, list) and len(v) == pos_bsz:
+                    new_d[k] = v + [v[-1]] * nag_bsz
+                else:
+                    new_d[k] = v
+            return new_d
+
+        kwargs_extended = expand_tensors_in_dict(kwargs, is_root=True)
+
+        # 5. Patch self_attn blocks temporarily to tell them the batch split
         if hasattr(self, 'blocks'):
             for block in self.blocks:
                 if hasattr(block, 'self_attn'):
@@ -78,7 +105,7 @@ def forward_nag_anima(
                 timestep_extended, 
                 context_extended, 
                 y=y_extended, 
-                **kwargs
+                **kwargs_extended
             )
         finally:
             # Clean up the origin_bsz state immediately
@@ -87,7 +114,7 @@ def forward_nag_anima(
                     if hasattr(block, 'self_attn') and hasattr(block.self_attn, 'origin_bsz'):
                         delattr(block.self_attn, 'origin_bsz')
                         
-        # 5. Return only the positive (guided) batch
+        # 6. Return only the positive (guided) batch
         return out[:pos_bsz]
     else:
         # Standard forward (no NAG)
@@ -148,6 +175,6 @@ class NAGAnimaSwitch(NAGSwitch):
                         delattr(block.self_attn, 'is_nag_wrapper')
                     
                     # Clean up our attached attributes
-                    for attr in ['nag_scale', 'nag_tau', 'nag_alpha', 'origin_bsz']:
+                    for attr in['nag_scale', 'nag_tau', 'nag_alpha', 'origin_bsz']:
                         if hasattr(block.self_attn, attr):
                             delattr(block.self_attn, attr)
