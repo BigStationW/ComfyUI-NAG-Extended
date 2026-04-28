@@ -20,12 +20,13 @@ class NAGUNetModel(UNetModel):
             control=None,
             transformer_options={},
 
+            nag_sigma_start=14.7,
             nag_negative_context=None,
             nag_sigma_end=0.,
 
             **kwargs,
     ):
-        apply_nag = check_nag_activation(transformer_options, nag_sigma_end)
+        apply_nag = check_nag_activation(transformer_options, nag_sigma_start, nag_sigma_end)
         if apply_nag:
             pos_bsz = x.shape[0]
             nag_bsz = nag_negative_context.shape[0]
@@ -81,6 +82,7 @@ class NAGUNetModelSwitch(NAGSwitch):
         self.model.forward = MethodType(
             partial(
                 NAGUNetModel.forward,
+                nag_sigma_start=self.nag_sigma_start,
                 nag_negative_context=self.nag_negative_cond[0][0],
                 nag_sigma_end=self.nag_sigma_end,
             ),
